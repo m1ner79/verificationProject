@@ -649,6 +649,7 @@ class GornickiMIchalTestTask3 {
 
         assertThrows(IllegalArgumentException.class, () -> new Rate(normalRate, reducedRate, carParkKind, reducedPeriods, normalPeriods));
     }
+    //NEW CASES to cover specification update
 
 
 }
