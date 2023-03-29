@@ -10,6 +10,7 @@ public class Rate {
     private BigDecimal hourlyReducedRate;
     private ArrayList<Period> reduced = new ArrayList<>();
     private ArrayList<Period> normal = new ArrayList<>();
+    private Reduction reduction;
 
     public Rate(BigDecimal normalRate, BigDecimal reducedRate, CarParkKind kind, ArrayList<Period> reducedPeriods
             , ArrayList<Period> normalPeriods) {
@@ -22,8 +23,8 @@ public class Rate {
         if (normalRate.compareTo(BigDecimal.ZERO) < 0 || reducedRate.compareTo(BigDecimal.ZERO) < 0) {
             throw new IllegalArgumentException("A rate cannot be negative");
         }
-        if (normalRate.compareTo(reducedRate) <= 0) {
-            throw new IllegalArgumentException("The normal rate cannot be less or equal to the reduced rate");
+        if (normalRate.compareTo(reducedRate) < 0) {
+            throw new IllegalArgumentException("The normal rate cannot be less than reduced rate");
         }
         if (!isValidPeriods(reducedPeriods) || !isValidPeriods(normalPeriods)) {
             throw new IllegalArgumentException("The periods are not valid individually");
@@ -36,6 +37,21 @@ public class Rate {
         this.hourlyReducedRate = reducedRate;
         this.reduced = reducedPeriods;
         this.normal = normalPeriods;
+
+        switch (kind) {
+            case VISITOR:
+                reduction = new VisitorReduction();
+                break;
+            case MANAGEMENT:
+                reduction = new ManagementReduction();
+                break;
+            case STUDENT:
+                reduction = new StudentReduction();
+                break;
+            case STAFF:
+                reduction = new StaffReduction();
+                break;
+        }
     }
 
     /**
@@ -91,8 +107,9 @@ public class Rate {
     public BigDecimal calculate(Period periodStay) {
         int normalRateHours = periodStay.occurences(normal);
         int reducedRateHours = periodStay.occurences(reduced);
-        return (this.hourlyNormalRate.multiply(BigDecimal.valueOf(normalRateHours))).add(
+        BigDecimal totalCost = (this.hourlyNormalRate.multiply(BigDecimal.valueOf(normalRateHours))).add(
                 this.hourlyReducedRate.multiply(BigDecimal.valueOf(reducedRateHours)));
+        return reduction.calculateReduction(totalCost);
     }
 
 }
